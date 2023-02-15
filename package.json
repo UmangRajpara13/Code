@@ -80,6 +80,7 @@
     ]
   },
   "dependencies": {
+    "fs-extra": "^11.1.0",
     "joi": "^17.7.0",
     "open": "^8.4.0",
     "vscode-nls-i18n": "^0.2.4",
@@ -88,6 +89,7 @@
   },
   "devDependencies": {
     "@nuxt/friendly-errors-webpack-plugin": "^2.5.2",
+    "@types/fs-extra": "^11.0.1",
     "@types/glob": "^8.0.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.11.17",
