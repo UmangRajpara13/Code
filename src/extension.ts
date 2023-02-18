@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext): void {
   var isFocused = true;
 
   vscode.window.showInformationMessage(
-    `At your service Boss! - Able [${defaultPort} - ${process.env.NODE_ENV}] `
+    `At your service Boss! - ABLE`
   );
   commands.executeCommand("vscode.git");
 

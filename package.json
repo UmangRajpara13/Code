@@ -1,14 +1,10 @@
 {
-  "name": "able-dev",
-  "displayName": "ABLE [dev]",
+  "name": "able",
+  "displayName": "ABLE",
   "version": "0.0.1",
   "description": "",
-  "publisher": "",
-  "author": {
-    "name": "",
-    "url": "",
-    "email": ""
-  },
+  "publisher": "thevoyagingstar",
+  "author": "Umang Rajpara",
   "icon": "images/logo.png",
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
@@ -62,7 +58,7 @@
     "test": "npm run test-compile && node ./out/test/runTests.js",
     "prepare": "husky install",
     "package": "vsce package",
-    "installBuild": "code --install-extension able-dev-0.0.1.vsix",
+    "install": "code --install-extension able-0.0.1.vsix",
     "publish": "vsce publish --no-dependencies"
   },
   "activationEvents": [
