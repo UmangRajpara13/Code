@@ -15,6 +15,7 @@ console.log(some);
 
 var defaultPort = process.env.NODE_ENV === "production" ? 1111 : 2222;
 var isFocused = true;
+var projectRoot: string | undefined;
 
 function connectToWebSocketServer() {
   const ws = new WebSocket(`ws://localhost:${defaultPort}`);
@@ -53,7 +54,6 @@ function connectToWebSocketServer() {
           `Stagging -> ${fileName?.substring(fileName.lastIndexOf(sep) + 1)}`
         );
 
-        var projectRoot;
 
         vscode.workspace.workspaceFolders?.forEach((folder) => {
           if (fileName?.includes(folder.uri.fsPath)) {
