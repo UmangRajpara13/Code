@@ -14,26 +14,9 @@ let some = extensions.getExtension("vscode.git")?.exports;
 console.log(some);
 
 var defaultPort = process.env.NODE_ENV === "production" ? 1111 : 2222;
+var isFocused = true;
 
-function sayHello() {
-  vscode.window.showInformationMessage(`Hello Boss`);
-}
-
-export function activate(context: vscode.ExtensionContext): void {
-  console.log("ext Activated!", process.env);
-
-  var isFocused = true;
-
-  vscode.window.showInformationMessage(
-    `At your service Boss! - ABLE`
-  );
-  commands.executeCommand("vscode.git");
-
-  vscode.window.onDidChangeWindowState((winState) => {
-    console.log(winState);
-    isFocused = winState.focused;
-  });
-
+function connectToWebSocketServer() {
   const ws = new WebSocket(`ws://localhost:${defaultPort}`);
   // console.log(ws, textEditor.document.fileName)
 
@@ -58,12 +41,9 @@ export function activate(context: vscode.ExtensionContext): void {
         // make terminal fullscreen and add in editor like tabs
         // remove menubar, activity bar
 
-        sayHello();
-        break;
-      case `new-window`:
-        exec(`code --new-window`, () => {});
-        break;
+        vscode.window.showInformationMessage(`Hello Boss`);
 
+        break;
       case `audit-changes`:
         break;
       case "git-stage-current-file":
@@ -166,6 +146,12 @@ export function activate(context: vscode.ExtensionContext): void {
                     execSync(
                       `mv '${scriptPath}/${tempFileName}.sh' '${scriptPath}/${value}.sh'`
                     );
+                    vscode.commands.executeCommand(
+                      "workbench.action.closeActiveEditor"
+                    );
+                    vscode.window.showTextDocument(
+                      Uri.file(`${scriptPath}/${value}.sh`)
+                    );
                     vscode.window.showInformationMessage(
                       "create bash -> Successfull"
                     );
@@ -213,6 +199,34 @@ export function activate(context: vscode.ExtensionContext): void {
         break;
       case "open-folder":
         vscode.commands.executeCommand("vscode.openFolder");
+        break;
+      case "create-a-new-file":
+        projectRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+        var tempFileName = new Date().toISOString();
+        try {
+          vscode.window
+            .showInputBox({
+              title: "Enter the name of your new file",
+              value: tempFileName,
+            })
+            .then((value) => {
+              console.log(value);
+              // eslint-disable-next-line curly
+              if (value === undefined) return;
+              // outputFileSync(`${projectRoot}/${value}.sh`);
+
+              execSync(`touch '${projectRoot}/${value}'`);
+              vscode.window
+                .showTextDocument(Uri.file(`${projectRoot}/${value}`))
+                .then(
+                  (textEditor) => {},
+                  (rejectionReason) => {}
+                );
+            });
+        } catch (error) {
+          vscode.window.showInformationMessage(`${error}`);
+        }
+        break;
       default:
         break;
     }
@@ -221,7 +235,23 @@ export function activate(context: vscode.ExtensionContext): void {
   ws.on("close", function message(data) {
     // vscode.window.showInformationMessage('Schnell : Disconnected!');
     console.log("ws close");
+    setTimeout(() => {
+      connectToWebSocketServer();
+    }, 1000);
   });
+}
+
+export function activate(context: vscode.ExtensionContext): void {
+  console.log("ext Activated!", process.env);
+
+  vscode.window.showInformationMessage(`At your service Boss! - ABLE`);
+
+  vscode.window.onDidChangeWindowState((winState) => {
+    console.log(winState);
+    isFocused = winState.focused;
+  });
+
+  connectToWebSocketServer();
 
   // init(context.extensionPath);
   // console.log(process.env.NODE_ENV)
