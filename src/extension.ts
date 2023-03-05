@@ -7,6 +7,11 @@ import { outputFile, outputFileSync } from "fs-extra";
 // import { logger } from './logger';
 
 import { WebSocket } from "ws";
+import {
+  initiateStagingProcess,
+  stageAllChanges,
+  stageCurrentFile,
+} from "./git/staging";
 
 let some = extensions.getExtension("vscode.git")?.exports;
 // let importedApi = some.exports;
@@ -34,6 +39,7 @@ function connectToWebSocketServer() {
     console.log("received: %s", data, isFocused);
     // vscode.window.showInformationMessage(`${data} ${isFocused}`);
 
+    // eslint-disable-next-line curly
     if (!isFocused) return;
 
     switch (`${data}`) {
@@ -46,57 +52,15 @@ function connectToWebSocketServer() {
 
         break;
       case `audit-changes`:
+        initiateStagingProcess();
+
         break;
       case "git-stage-current-file":
-        var fileName = vscode.window.activeTextEditor?.document.fileName;
-
-        vscode.window.showInformationMessage(
-          `Stagging -> ${fileName?.substring(fileName.lastIndexOf(sep) + 1)}`
-        );
-
-
-        vscode.workspace.workspaceFolders?.forEach((folder) => {
-          if (fileName?.includes(folder.uri.fsPath)) {
-            projectRoot = folder.uri.fsPath;
-          }
-        });
-
-        console.log(
-          process.cwd(),
-          projectRoot,
-          vscode.workspace.workspaceFolders,
-          vscode.window.activeTextEditor
-        );
-
-        try {
-          execSync(`cd '${projectRoot}' && git add '${fileName}'`);
-          // var execute = spawn("git", ["add", `${fileName}`], {
-          //   cwd: projectRoot,
-          // });
-          // execute.stdout.on("data", (data) => {
-          //   // process.stdout.write(`<< ${data} `.replace("\n", ""));
-          // });
-
-          // execute.stderr.on("data", (data) => {
-          //   // console.error(`stderr: ${data}`);
-          // });
-
-          // execute.on("close", (code) => {
-          //   // eslint-disable-next-line eqeqeq
-          //   if (code == 0) {
-          //     vscode.commands.executeCommand(
-          //       "workbench.action.closeActiveEditor"
-          //     );
-          //     return;
-          //   }
-          //   process.stdout.write(`Exit Code ${code}`);
-          // });
-          vscode.commands.executeCommand("workbench.action.closeActiveEditor");
-        } catch (error) {
-          vscode.window.showWarningMessage(`${error}`);
-        }
+        stageCurrentFile();
         break;
-
+      case "stage-all-changes":
+        stageAllChanges();
+        break;
       case "git-commit":
         vscode.window.showInformationMessage("commit");
 
@@ -123,6 +87,48 @@ function connectToWebSocketServer() {
         } catch (error) {
           vscode.window.showInformationMessage(`${error}`);
         }
+        break;
+      case "commit-changes-and-push":
+        vscode.window
+          .showInputBox({ placeHolder: "Enter a Commit Message" })
+          .then((value) => {
+            console.log(value);
+            // eslint-disable-next-line curly
+            if (value === undefined) return;
+
+            var projectRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+
+            execSync(`cd '${projectRoot}' && git commit -m "${value}"`);
+            vscode.window
+              .withProgress(
+                {
+                  location: vscode.ProgressLocation.Notification,
+                  title: `Push to Remote`,
+                  cancellable: false,
+                },
+                async (progress, token) => {
+                  progress.report({ message: "Uploading..." });
+
+                  // Long running task here...
+                  await new Promise<void>(async (resolve, reject) => {
+                    // Simulate an error by rejecting the Promise
+                    //   setTimeout(() => reject("Error occurred!"), 5000);
+                    try {
+                      execSync(`cd '${projectRoot}' && git push`);
+                      resolve();
+                    } catch (error) {
+                      vscode.window.showWarningMessage(`${error}`);
+                      reject();
+                    }
+                    progress.report({ message: "Upload Successfull!" });
+                  });
+                  return;
+                }
+              )
+              .then(async (result) => {
+                console.log(result);
+              });
+          });
         break;
       case "create-a-bash-script":
         projectRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
