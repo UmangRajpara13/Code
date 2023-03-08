@@ -13,29 +13,30 @@ import {
   stageCurrentFile,
 } from "./git/staging";
 
-let some = extensions.getExtension("vscode.git")?.exports;
-// let importedApi = some.exports;
-// console.log(extensions.all)
-console.log(some);
-
+var connection: WebSocket | null;
 var defaultPort = process.env.NODE_ENV === "production" ? 1111 : 2222;
+const isDev = process.env.NODE_ENV === "production" ? false : true;
 var isFocused = true;
 var projectRoot: string | undefined;
 
 function connectToWebSocketServer() {
-  const ws = new WebSocket(`ws://localhost:${defaultPort}`);
-  // console.log(ws, textEditor.document.fileName)
+  connection = new WebSocket(`ws://localhost:${defaultPort}`);
 
-  ws.on("error", function error(err) {
-    // vscode.window.showInformationMessage(`[Error] Please check if Schnell is running and listening on ${port}`);
-    console.log("ws error", err);
+  connection.on("error", function error(err) {
+    console.log("connection error", err);
   });
-  ws.on("open", function open() {
-    console.log("ws open");
-    ws.send(`id:code.Code`);
+  connection.on("close", function message(data) {
+    console.log("connection close");
+    setTimeout(() => {
+      connectToWebSocketServer();
+    }, 1000);
+  });
+  connection.on("open", function open() {
+    console.log("connection open");
+    connection?.send(`id:code.Code`);
   });
 
-  ws.on("message", function message(data) {
+  connection.on("message", function message(data) {
     console.log("received: %s", data, isFocused);
     // vscode.window.showInformationMessage(`${data} ${isFocused}`);
 
@@ -120,6 +121,10 @@ function connectToWebSocketServer() {
                       vscode.window.showWarningMessage(`${error}`);
                       reject();
                     }
+                  }).then(() => {
+                    vscode.commands.executeCommand(
+                      "workbench.action.toggleFullScreen"
+                    );
                     progress.report({ message: "Upload Successfull!" });
                   });
                   return;
@@ -237,39 +242,26 @@ function connectToWebSocketServer() {
         break;
     }
   });
-
-  ws.on("close", function message(data) {
-    // vscode.window.showInformationMessage('Schnell : Disconnected!');
-    console.log("ws close");
-    setTimeout(() => {
-      connectToWebSocketServer();
-    }, 1000);
-  });
 }
 
 export function activate(context: vscode.ExtensionContext): void {
   console.log("ext Activated!", process.env);
 
-  vscode.window.showInformationMessage(`At your service Boss! - ABLE`);
+  vscode.window.showInformationMessage(`Able : At your service Boss!`);
 
   vscode.window.onDidChangeWindowState((winState) => {
     console.log(winState);
     isFocused = winState.focused;
+    if (isDev) {
+      if (isFocused) {
+        connection && connection.send("switchWsChannel:development");
+      } else {
+        connection && connection.send("switchWsChannel:production");
+      }
+    }
   });
 
   connectToWebSocketServer();
-
-  // init(context.extensionPath);
-  // console.log(process.env.NODE_ENV)
-  // logger.log(`language: ${vscode.env.language}`);
-  // const { remoteName } = vscode.env;
-  // if (remoteName) {
-  //     logger.log(`active extension in ${remoteName} remote environment`);
-  // }
-
-  // commands.forEach((command) => {
-  //     context.subscriptions.push(vscode.commands.registerCommand(command.identifier!, command.handler));
-  // });
 }
 
 export function deactivate(): void {

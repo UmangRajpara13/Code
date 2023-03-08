@@ -75,18 +75,17 @@ export async function stageCurrentFile() {
     });
 }
 
-export function stageAllChanges(){
+export function stageAllChanges() {
   projectRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 
-  vscode.window
-  .withProgress(
+  vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
       title: `Stagging`,
       cancellable: false,
     },
     async (progress, token) => {
-        progress.report({ message: "Staging All..." });
+      progress.report({ message: "Staging All..." });
 
       // Long running task here...
       await new Promise<void>(async (resolve, reject) => {
@@ -108,6 +107,7 @@ export function stageAllChanges(){
 }
 
 export async function initiateStagingProcess() {
+  vscode.commands.executeCommand("workbench.action.toggleFullScreen");
   projectRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
   const gitExt = vscode.extensions.getExtension("vscode.git")!;
   const api = gitExt.exports.getAPI(1);
