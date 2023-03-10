@@ -14,8 +14,7 @@ import {
 } from "./git/staging";
 
 var connection: WebSocket | null;
-var defaultPort = process.env.NODE_ENV === "production" ? 1111 : 2222;
-const isDev = process.env.NODE_ENV === "production" ? false : true;
+var defaultPort =  1111;
 var isFocused = true;
 var projectRoot: string | undefined;
 
@@ -38,16 +37,12 @@ function connectToWebSocketServer() {
 
   connection.on("message", function message(data) {
     console.log("received: %s", data, isFocused);
-    // vscode.window.showInformationMessage(`${data} ${isFocused}`);
 
     // eslint-disable-next-line curly
     if (!isFocused) return;
 
     switch (`${data}`) {
       case `say-hello`:
-        // open vscode new-Window with small size
-        // make terminal fullscreen and add in editor like tabs
-        // remove menubar, activity bar
 
         vscode.window.showInformationMessage(`Hello Boss`);
 
@@ -109,11 +104,8 @@ function connectToWebSocketServer() {
                 },
                 async (progress, token) => {
                   progress.report({ message: "Uploading..." });
-
                   // Long running task here...
                   await new Promise<void>(async (resolve, reject) => {
-                    // Simulate an error by rejecting the Promise
-                    //   setTimeout(() => reject("Error occurred!"), 5000);
                     try {
                       execSync(`cd '${projectRoot}' && git push`);
                       resolve();
@@ -252,13 +244,6 @@ export function activate(context: vscode.ExtensionContext): void {
   vscode.window.onDidChangeWindowState((winState) => {
     console.log(winState);
     isFocused = winState.focused;
-    if (isDev) {
-      if (isFocused) {
-        connection && connection.send("switchWsChannel:development");
-      } else {
-        connection && connection.send("switchWsChannel:production");
-      }
-    }
   });
 
   connectToWebSocketServer();
