@@ -1,8 +1,6 @@
-import { exec, execSync, spawn } from "child_process";
-import { join, relative, sep } from "path";
-import vscode, { commands, Uri, extensions } from "vscode";
-// import { init } from 'vscode-nls-i18n';
-import { outputFile, outputFileSync } from "fs-extra";
+import { execSync } from "child_process";
+import vscode, { Uri } from "vscode";
+import { outputFileSync } from "fs-extra";
 import {
   initiateStagingProcess,
   stageAllChanges,
@@ -12,23 +10,23 @@ import {
 var projectRoot: string | undefined;
 
 export function apiProcessorGen3(data: Object, isFocused: boolean) {
-  console.log("Gen3 API Processor");
+  console.log("Gen3 API Processor", JSON.parse(`${data}`));
 
-  const payload = JSON.parse(`${data}`);
-  const api = payload.api;
-  if (payload.focusRequired) {
+  const dataPacket = JSON.parse(`${data}`);
+  console.log(dataPacket);
+  const api = dataPacket.api;
+
+  if (dataPacket?.focusRequired) {
     // eslint-disable-next-line curly
     if (!isFocused) return;
   }
 
   switch (api) {
     case `say-hello`:
-      vscode.window.showInformationMessage(`Hello Boss`);
-
+      vscode.window.showInformationMessage(`Hello Boss!`);
       break;
     case `audit-changes`:
       initiateStagingProcess();
-
       break;
     case "git-stage-current-file":
       stageCurrentFile();
@@ -53,7 +51,6 @@ export function apiProcessorGen3(data: Object, isFocused: boolean) {
         });
 
       break;
-
     case "git-push":
       projectRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
       try {
@@ -147,7 +144,6 @@ export function apiProcessorGen3(data: Object, isFocused: boolean) {
       break;
     case "show-scripts":
       projectRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-
       try {
         vscode.window.showTextDocument(Uri.file(`${projectRoot}/package.json`));
         vscode.window.showInformationMessage("show-scripts Successfull");
@@ -207,7 +203,16 @@ export function apiProcessorGen3(data: Object, isFocused: boolean) {
         vscode.window.showInformationMessage(`${error}`);
       }
       break;
+    case "run-script":
+      var title = dataPacket.payload.title;
+      var run = dataPacket.payload.command;
+      const terminal = vscode.window.createTerminal(`( ${title} )`);
+      terminal.show();
+      terminal.sendText(run);
+
+      break;
     default:
+      console.log("Unhandled", dataPacket);
       break;
   }
 }
