@@ -54,7 +54,7 @@ export function checkPackageJson(
               api: "run-script",
               payload: {
                 title: scriptKey,
-                command: `${packageManager} run ${scriptKey}`
+                command: `${packageManager} run ${scriptKey}`,
               },
             },
           },
@@ -62,12 +62,14 @@ export function checkPackageJson(
       });
       // sending scriptsObj as actions
       const dataPacket = {
-        id: "code.Code",
-        type: "actions",
-        scope: "onActiveWindow",
-        payload: scriptsObj,
+        awareness: {
+          id: "code.Code",
+          type: "actions",
+          scope: "onActiveWindow",
+          payload: scriptsObj,
+        },
       };
-      connection.send(`awareness:${JSON.stringify(dataPacket)}`);
+      connection.send(JSON.stringify(dataPacket));
     });
   });
 }

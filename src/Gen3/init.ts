@@ -61,7 +61,7 @@ export function connectToWebSocketServer(
 
   connection.on("open", function open() {
     console.log("connection open");
-    connection?.send(`id:code.Code`);
+    connection?.send(JSON.stringify({id:`code.Code`}));
 
     vscode.window.showInformationMessage(`Able : At your service Boss!`);
 
