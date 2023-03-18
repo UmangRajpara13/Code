@@ -5,13 +5,25 @@ import vscode, { Uri } from "vscode";
 
 import { WebSocket } from "ws";
 import { checkPackageJson } from "./getProjectInfo";
+import { exec, execSync } from "child_process";
 
 var defaultPort = 1111;
 
+var isFocused = true;
+var windowID: string | undefined;
+
+vscode.window.onDidChangeWindowState((winState) => {
+  console.log(winState);
+  isFocused = winState.focused;
+  if (isFocused) {
+    windowID = `${execSync(`xdotool getactivewindow`)}`;
+    // console.log(windowID)
+  }
+});
+
 function init(
   context: vscode.ExtensionContext,
-  connection: WebSocket | import("ws"),
-  isFocused: boolean
+  connection: WebSocket | import("ws")
 ) {
   const projectDir = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 
@@ -40,38 +52,38 @@ function init(
   context.subscriptions.push(watcher);
 }
 
-export function connectToWebSocketServer(
-  context: vscode.ExtensionContext,
-  isFocused: boolean
-) {
+export function connectToWebSocketServer(context: vscode.ExtensionContext) {
   const connection = new WebSocket(
     `ws://localhost:${defaultPort}`
   ) as WebSocket;
 
   connection.on("error", function error(err) {
     console.log("connection error", err);
+    setTimeout(() => {
+      connectToWebSocketServer(context);
+    }, 1000);
   });
 
   connection.on("close", function message(data) {
     console.log("connection close");
     setTimeout(() => {
-      connectToWebSocketServer(context, isFocused);
+      connectToWebSocketServer(context);
     }, 1000);
   });
 
   connection.on("open", function open() {
     console.log("connection open");
-    connection?.send(JSON.stringify({id:`code.Code`}));
+    connection?.send(JSON.stringify({ id: `code.Code` }));
 
     vscode.window.showInformationMessage(`Able : At your service Boss!`);
 
-    init(context, connection, isFocused);
+    init(context, connection);
   });
 
   connection.on("message", function message(data) {
     console.log("received: %s", data, isFocused);
 
     // apiProcessorGen2(data, isFocused);
-    apiProcessorGen3(data, isFocused);
+    apiProcessorGen3(data, isFocused, windowID);
   });
 }

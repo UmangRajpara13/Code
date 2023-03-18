@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+import { exec, execSync } from "child_process";
 import vscode, { Uri } from "vscode";
 import { outputFileSync } from "fs-extra";
 import {
@@ -9,12 +9,33 @@ import {
 
 var projectRoot: string | undefined;
 
-export function apiProcessorGen3(data: Object, isFocused: boolean) {
+export function apiProcessorGen3(
+  data: Object,
+  isFocused: boolean,
+  windowID: string | undefined
+) {
   console.log("Gen3 API Processor", JSON.parse(`${data}`));
 
   const dataPacket = JSON.parse(`${data}`);
-  console.log(dataPacket);
   const api = dataPacket.api;
+
+  switch (api) {
+    case `close-inactive-windows`:
+      if (!isFocused) {
+        try {
+          if (windowID) {
+            exec(`wmctrl -i -c ${windowID}`);
+          }
+        } catch (error) {
+          vscode.window.showWarningMessage(`${error}`);
+        }
+      }
+
+      break;
+
+    default:
+      break;
+  }
 
   if (dataPacket?.focusRequired) {
     // eslint-disable-next-line curly
@@ -209,6 +230,16 @@ export function apiProcessorGen3(data: Object, isFocused: boolean) {
       const terminal = vscode.window.createTerminal(`( ${title} )`);
       terminal.show();
       terminal.sendText(run);
+
+      break;
+    case `close-window`:
+      // eslint-disable-next-line curly
+
+      try {
+        exec(`wmctrl -i -c $(xdotool getactivewindow)`);
+      } catch (error) {
+        vscode.window.showWarningMessage(`${error}`);
+      }
 
       break;
     default:

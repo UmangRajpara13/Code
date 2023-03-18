@@ -2,15 +2,11 @@ import vscode from "vscode";
 
 import { connectToWebSocketServer } from "./Gen3/init";
 
-var isFocused = true;
 
 export function activate(context: vscode.ExtensionContext): void {
-  console.log("ext Activated!");
+  console.log("ext Activated!",process.env,process.pid,vscode.window);
 
-  vscode.window.onDidChangeWindowState((winState) => {
-    console.log(winState);
-    isFocused = winState.focused;
-  });
+
 
   vscode.workspace.onDidChangeWorkspaceFolders((event) => {
     console.log(event.added);
@@ -72,7 +68,7 @@ export function activate(context: vscode.ExtensionContext): void {
     //   // }
   });
 
-  connectToWebSocketServer(context, isFocused);
+  connectToWebSocketServer(context);
 }
 
 export function deactivate(): void {
