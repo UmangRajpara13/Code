@@ -14,48 +14,36 @@ export function apiProcessorGen3(
   isFocused: boolean,
   windowID: string | undefined
 ) {
-  console.log("Gen3 API Processor", JSON.parse(`${data}`));
+  if (!isFocused) {
+    return;
+  }
+
+  console.log("Gen3 Intent Processor", JSON.parse(`${data}`));
 
   const dataPacket = JSON.parse(`${data}`);
-  const api = dataPacket.api;
+  const spokenSentence = dataPacket.spokenSentence;
+  const raw = spokenSentence
+    .trim()
+    .toLowerCase()
+    .replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
+    .replace(/\s{2,}/g, " ");
 
-  switch (api) {
-    case `close-inactive-windows`:
-      if (!isFocused) {
-        try {
-          if (windowID) {
-            exec(`wmctrl -i -c ${windowID}`);
-          }
-        } catch (error) {
-          vscode.window.showWarningMessage(`${error}`);
-        }
-      }
-
-      break;
-
-    default:
-      break;
-  }
-
-  if (dataPacket?.focusRequired) {
-    // eslint-disable-next-line curly
-    if (!isFocused) return;
-  }
-
-  switch (api) {
+  const intent = raw.replaceAll(" ", "-");
+  
+  switch (intent) {
     case `say-hello`:
       vscode.window.showInformationMessage(`Hello Boss!`);
       break;
-    case `audit-changes`:
+    case `initiate-staging-process`:
       initiateStagingProcess();
       break;
-    case "git-stage-current-file":
+    case "okay":
       stageCurrentFile();
       break;
     case "stage-all-changes":
       stageAllChanges();
       break;
-    case "git-commit":
+    case "create-a-checkpoint":
       vscode.window.showInformationMessage("commit");
 
       // open input box
@@ -72,7 +60,7 @@ export function apiProcessorGen3(
         });
 
       break;
-    case "git-push":
+    case "push-to-remote":
       projectRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
       try {
         execSync(`cd '${projectRoot}' && git push`);
@@ -163,7 +151,7 @@ export function apiProcessorGen3(
         vscode.window.showInformationMessage(`${error}`);
       }
       break;
-    case "show-scripts":
+    case "open-package-file":
       projectRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
       try {
         vscode.window.showTextDocument(Uri.file(`${projectRoot}/package.json`));
