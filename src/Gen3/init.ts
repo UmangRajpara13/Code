@@ -53,15 +53,15 @@ function init(
 }
 
 export function connectToWebSocketServer(context: vscode.ExtensionContext) {
-  const connection = new WebSocket(
-    `ws://localhost:${defaultPort}`
-  ) as WebSocket;
+  const connection = new WebSocket(`wss://localhost:${defaultPort}`, {
+    rejectUnauthorized: false
+});
 
   connection.on("error", function error(err) {
     console.log("connection error", err);
-    setTimeout(() => {
-      connectToWebSocketServer(context);
-    }, 1000);
+    // setTimeout(() => {
+    //   connectToWebSocketServer(context);
+    // }, 1000);
   });
 
   connection.on("close", function message(data) {
