@@ -29,7 +29,7 @@ export function apiProcessorGen3(
     .replace(/\s{2,}/g, " ");
 
   const intent = raw.replaceAll(" ", "-");
-  
+
   switch (intent) {
     case `say-hello`:
       vscode.window.showInformationMessage(`Hello Boss!`);
@@ -63,8 +63,36 @@ export function apiProcessorGen3(
     case "push-to-remote":
       projectRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
       try {
-        execSync(`cd '${projectRoot}' && git push`);
-        vscode.window.showInformationMessage("Push Successfull");
+        vscode.window
+          .withProgress(
+            {
+              location: vscode.ProgressLocation.Notification,
+              title: `Pushing to Remote`,
+              cancellable: false,
+            },
+            async (progress, token) => {
+              progress.report({ message: "Uploading..." });
+              // Long running task here...
+              await new Promise<void>(async (resolve, reject) => {
+                try {
+                  execSync(`cd '${projectRoot}' && git push`);
+                  resolve();
+                } catch (error) {
+                  vscode.window.showWarningMessage(`${error}`);
+                  reject();
+                }
+              }).then(() => {
+                vscode.commands.executeCommand(
+                  "workbench.action.toggleFullScreen"
+                );
+                progress.report({ message: "Push Successfull!" });
+              });
+              return;
+            }
+          )
+          .then(async (result) => {
+            console.log(result);
+          });
       } catch (error) {
         vscode.window.showInformationMessage(`${error}`);
       }
@@ -84,7 +112,7 @@ export function apiProcessorGen3(
             .withProgress(
               {
                 location: vscode.ProgressLocation.Notification,
-                title: `Push to Remote`,
+                title: `Pushing to Remote`,
                 cancellable: false,
               },
               async (progress, token) => {

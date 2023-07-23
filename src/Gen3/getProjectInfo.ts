@@ -49,7 +49,7 @@ export function checkPackageJson(
         scriptsObj = {
           ...scriptsObj,
           [`run-${scriptKey}-script`]: {
-            client: "code.Code",
+            client: "vscode",
             action: {
               api: "run-script",
               payload: {
@@ -63,7 +63,7 @@ export function checkPackageJson(
       // sending scriptsObj as actions
       const dataPacket = {
         awareness: {
-          id: "code.Code",
+          id: "vscode",
           type: "actions",
           scope: "onActiveWindow",
           payload: scriptsObj,
