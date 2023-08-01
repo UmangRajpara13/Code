@@ -1,8 +1,6 @@
 <div align="center">
 
-# ABLE Voice Assisstant
-
-Controls VS Code with voice commands
+Integration Example with VS Code via an extension.
 
 </div>
 
