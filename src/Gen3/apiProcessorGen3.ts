@@ -10,18 +10,19 @@ import {
 var projectRoot: string | undefined;
 
 export function apiProcessorGen3(
-  data: Object,
+  transcription: any,
   isFocused: boolean,
   windowID: string | undefined
 ) {
   if (!isFocused) {
     return;
   }
+  const spokenSentence = transcription.spokenSentence;
 
-  console.log("Gen3 Intent Processor", JSON.parse(`${data}`));
+  console.log("Gen3 Intent Processor", spokenSentence);
 
-  const dataPacket = JSON.parse(`${data}`);
-  const spokenSentence = dataPacket.spokenSentence;
+  // const dataPacket = JSON.parse(`${data}`);
+  // const spokenSentence = dataPacket.spokenSentence;
   const raw = spokenSentence
     .trim()
     .toLowerCase()
@@ -241,11 +242,11 @@ export function apiProcessorGen3(
       }
       break;
     case "run-script":
-      var title = dataPacket.payload.title;
-      var run = dataPacket.payload.command;
-      const terminal = vscode.window.createTerminal(`( ${title} )`);
-      terminal.show();
-      terminal.sendText(run);
+      // var title = dataPacket.payload.title;
+      // var run = dataPacket.payload.command;
+      // const terminal = vscode.window.createTerminal(`( ${title} )`);
+      // terminal.show();
+      // terminal.sendText(run);
 
       break;
     case `close-window`:
@@ -259,7 +260,7 @@ export function apiProcessorGen3(
 
       break;
     default:
-      console.log("Unhandled", dataPacket);
+      console.log("Unhandled", spokenSentence);
       break;
   }
 }

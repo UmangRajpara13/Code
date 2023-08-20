@@ -7,6 +7,7 @@ import { exec, execSync } from "child_process";
 var defaultPort = 1111;
 var windowID: string | undefined;
 var connection: WebSocket | import("ws");
+var connectionId: string;
 
 // as the app launches we assume that it's window is curently in focus
 // even without user specificaly selecting the window with mouse,
@@ -23,9 +24,25 @@ vscode.window.onDidChangeWindowState((windowState) => {
     // we let 'Able' know that one of the VS Codes' window is focused
     // so that it will redirect all voice commands through websockets
     // to this extension.
-    connection?.send(JSON.stringify({ focusedClientId: `vscode` }));
+    connection?.send(
+      JSON.stringify({
+        windowState: {
+          connectionId: connectionId,
+          identifier: `vscode`,
+          isWindowFocused: true,
+        },
+      })
+    );
   } else {
-    connection?.send(JSON.stringify({ focusedClientId: null }));
+    connection?.send(
+      JSON.stringify({
+        windowState: {
+          connectionId: connectionId,
+          identifier: `vscode`,
+          isWindowFocused: false,
+        },
+      })
+    );
   }
 });
 
@@ -61,9 +78,7 @@ function init(
 }
 
 export function connectToWebSocketServer(context: vscode.ExtensionContext) {
-  connection = new WebSocket(`wss://localhost:${defaultPort}`, {
-    rejectUnauthorized: false,
-  });
+  connection = new WebSocket(`ws://localhost:${defaultPort}`);
 
   connection.on("error", function error(err) {
     console.log("connection error", err);
@@ -81,7 +96,7 @@ export function connectToWebSocketServer(context: vscode.ExtensionContext) {
 
   connection.on("open", function open() {
     console.log("connection open");
-    connection?.send(JSON.stringify({ id: `vscode` }));
+    connection?.send(JSON.stringify({ identifier: `vscode` }));
 
     vscode.window.showInformationMessage(`Able: At your service Boss!`);
 
@@ -91,7 +106,17 @@ export function connectToWebSocketServer(context: vscode.ExtensionContext) {
   connection.on("message", function message(data) {
     console.log("received: %s", data, isFocused);
 
-    // apiProcessorGen2(data, isFocused);
-    apiProcessorGen3(data, isFocused, windowID);
+    const dataPacket = JSON.parse(`${data}`);
+    const command = Object.keys(dataPacket)[0];
+
+    switch (command) {
+      case "connectionId":
+        connectionId = dataPacket.connectionId.timeStamp;
+        break;
+      case "transcription":
+        apiProcessorGen3(dataPacket.transcription, isFocused, windowID);
+      default:
+        break;
+    }
   });
 }
